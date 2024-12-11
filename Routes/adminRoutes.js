@@ -2,10 +2,15 @@ import express from 'express';
 import {
   registerAdmin,
   loginAdmin,
+  getAllAdmins,
+  getAdminById,
+  updateAdmin,
+  deleteAdmin ,
   getAdminDashboard,
-  manageBookings,
-  managePayments,
-  manageUsers
+  getAllBookings,
+  getBookingById,
+  updateBookings,
+  deleteBooking
 } from '../controllers/adminController.js';
 import { authenticateAdmin, authorizePermissions } from '../middleware/adminMiddleware.js';
 
@@ -15,16 +20,33 @@ const router = express.Router();
 router.post('/register', registerAdmin);
 router.post('/login', loginAdmin);
 
+// Get All Admins
+router.get('/admins', getAllAdmins);
+
+// Get a specific admin by ID
+router.get('/admins/:id', getAdminById);
+
+// New routes for updating and deleting admins
+router.put('/admins/:id', updateAdmin); 
+router.delete('/admins/:id', deleteAdmin); 
+
 // Admin dashboard
 router.get('/dashboard', authenticateAdmin, getAdminDashboard);
 
 // Admin can manage bookings
-router.put('/manage-bookings/:id', authenticateAdmin, authorizePermissions('manageBookings'), manageBookings);
+// Admin can view all bookings
+router.get('/admin/bookings', authenticateAdmin, authorizePermissions('manageBookings'), getAllBookings);
 
-// Admin can manage payments
-router.put('/manage-payments/:id', authenticateAdmin, authorizePermissions('managePayments'), managePayments);
+// Admin can view a specific booking by ID
+router.get('/admin/bookings/:id', authenticateAdmin, authorizePermissions('manageBookings'), getBookingById);
 
-// Admin can manage users
-router.put('/manage-users/:id', authenticateAdmin, authorizePermissions('manageUsers'), manageUsers);
+// Admin can update a booking
+router.put('/admin/bookings/:id', authenticateAdmin, authorizePermissions('manageBookings'), updateBookings);
+
+// Admin can delete a booking
+router.delete('/admin/bookings/:id', authenticateAdmin, authorizePermissions('manageBookings'), deleteBooking);
+
+
+
 
 export default router;

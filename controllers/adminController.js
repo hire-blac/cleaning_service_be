@@ -1,111 +1,228 @@
 import Admin from '../models/adminModel.js';
 import User from '../models/userModel.js';
-import Booking from '../models/bookingModel.js'; 
-// import Payment from '../models/paymentModel.js'; s
+import Booking from '../models/bookingModel.js';
+import generateToken from '../utils/generateToken.js';
+// import Payment from '../models/paymentModel.js'; // Uncomment if you have a Payment model
 
 // Register admin
-const registerAdmin = async (req, res) => {
-    const { name, email, password } = req.body;
-  
-    // Check if admin already exists
-    const adminExists = await Admin.findOne({ email });
-    if (adminExists) {
-      return res.status(400).json({ message: 'Admin already exists' });
+export const registerAdmin = async (req, res) => {
+  const { firstName, lastName, phoneNumber, email, password, role } = req.body;
+
+  // Check if all required fields are provided
+  if (!firstName || !lastName || !phoneNumber || !email || !password || !role) {
+    return res.status(400).json({ message: 'All fields are required' });
+  }
+
+  try {
+    // Check if admin email already exists
+    const existingAdmin = await Admin.findOne({ email });
+    if (existingAdmin) {
+      return res.status(400).json({ message: 'Admin with this email already exists' });
     }
-  
+
     // Create a new admin
-    const admin = new Admin({ name, email, password });
-    await admin.save();
+    const admin = await Admin.create({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password,
+      role,
+    });
+
+    if (admin) {
+      generateToken(res, admin._id);
   
-    res.status(201).json({ message: 'Admin registered successfully', admin });
-  };
-  
+      res.status(201).json({
+        _id: admin._id,
+        firstName: admin.firstName,
+        lastName: admin.lastName,
+        email: admin.email,
+        phoneNumber: admin.phoneNumber,
+        homeAddress: admin.homeAddress,
+      });
+    } else {
+      res.status(400);
+      throw new Error('Invalid user data');
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
 // Login admin
-const loginAdmin = async (req, res) => {
+export const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
   const admin = await Admin.findOne({ email });
-  if (!admin) {
-    return res.status(400).json({ message: 'Invalid email or password' });
+
+  if (admin && (await admin.matchPassword(password))) {
+    generateToken(res, admin._id); // This sets the token as a cookie
+    const adminData = {
+      id: admin._id,
+      firstName: admin.firstName,
+      lastName: admin.lastName,
+      email: admin.email,
+      role: admin.role,
+    };
+
+    res.json({
+      message: 'Admin login successful',
+      admin: adminData, 
+    });
+  } else {
+    res.status(400).json({ message: 'Invalid email or password' });
   }
+};
 
-  const isPasswordMatch = await admin.matchPassword(password);
-  if (!isPasswordMatch) {
-    return res.status(400).json({ message: 'Invalid email or password' });
+// Get All Admins
+export const getAllAdmins = async (req, res) => {
+  try {
+    const admins = await Admin.find().select('-password');
+    res.status(200).json(admins);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
   }
+};
 
-  // Generate token with admin data
-  const token = jwt.sign(
-    { id: admin._id, role: admin.role, permissions: admin.permissions },
-    process.env.JWT_SECRET,
-    { expiresIn: '1h' }
-  );
+// Get Admin By ID
+export const getAdminById = async (req, res) => {
+  try {
+    const admin = await Admin.findById(req.params.id).select('-password'); 
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    res.status(200).json(admin);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
 
-  res.json({ message: 'Admin login successful', token });
+// Update Admin
+export const updateAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findByIdAndUpdate(
+      req.params.id, 
+      { ...req.body },
+      { new: true, runValidators: true } // Return the updated document
+    ).select('-password'); // Exclude password field
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+    
+    res.status(200).json(admin);
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
+};
+
+// Delete Admin
+export const deleteAdmin = async (req, res) => {
+  try {
+    const admin = await Admin.findByIdAndDelete(req.params.id);
+
+    if (!admin) {
+      return res.status(404).json({ message: "Admin not found" });
+    }
+
+    res.status(200).json({ message: "Admin deleted successfully" });
+  } catch (error) {
+    res.status(500).json({
+      message: "Server error",
+      error: error.message,
+    });
+  }
 };
 
 // Admin dashboard
- const getAdminDashboard = async (req, res) => {
+export const getAdminDashboard = async (req, res) => {
   const admin = req.admin;
+
   // Return data like total users, bookings, and payments
   const totalUsers = await User.countDocuments();
   const totalBookings = await Booking.countDocuments();
-  const totalPayments = await Payment.countDocuments();
+  // const totalPayments = await Payment.countDocuments(); // Uncomment if you use Payment model
 
   res.json({
     totalUsers,
     totalBookings,
-    totalPayments,
+    totalPayments, // Remove or update based on Payment model usage
   });
 };
 
-// Manage bookings
- const manageBookings = async (req, res) => {
-  const { id } = req.params;
-  const booking = await Booking.findById(id);
-
-  if (!booking) {
-    return res.status(404).json({ message: 'Booking not found' });
-  }
-
-  // Update the booking or perform other actions
-  booking.status = req.body.status || booking.status;
-  await booking.save();
-
-  res.json({ message: 'Booking updated successfully', booking });
+export const logoutAdmin = (req, res) => {
+  res.cookie('jwt', '', {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.status(200).json({ message: 'Logged out successfully' });
 };
 
-// Manage payments
- const managePayments = async (req, res) => {
-  const { id } = req.params;
-  const payment = await Payment.findById(id);
-
-  if (!payment) {
-    return res.status(404).json({ message: 'Payment not found' });
+export const getAllBookings = async (req, res) => {
+  try {
+    const bookings = await Booking.find();
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching bookings', error: error.message });
   }
-
-  // Update the payment status
-  payment.status = req.body.status || payment.status;
-  await payment.save();
-
-  res.json({ message: 'Payment updated successfully', payment });
 };
 
-// Manage users
- const manageUsers = async (req, res) => {
-  const { id } = req.params;
-  const user = await User.findById(id);
+// Admin can view a booking by ID
+export const getBookingById = async (req, res) => {
+  try {
+    const booking = await Booking.findById(req.params.id);
+    
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
 
-  if (!user) {
-    return res.status(404).json({ message: 'User not found' });
+    res.status(200).json(booking);
+  } catch (error) {
+    res.status(500).json({ message: 'Error fetching booking', error: error.message });
   }
-
-  // Perform user management tasks like updating user info or deactivating the account
-  user.status = req.body.status || user.status;
-  await user.save();
-
-  res.json({ message: 'User updated successfully', user });
 };
 
+// Admin can update a booking
+export const updateBookings = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndUpdate(
+      req.params.id,
+      { ...req.body },
+      { new: true, runValidators: true }
+    );
 
-export { getAdminDashboard, registerAdmin, loginAdmin,manageBookings, managePayments, manageUsers }
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json(booking);
+  } catch (error) {
+    res.status(500).json({ message: 'Error updating booking', error: error.message });
+  }
+};
+
+// Admin can delete a booking
+export const deleteBooking = async (req, res) => {
+  try {
+    const booking = await Booking.findByIdAndDelete(req.params.id);
+    
+    if (!booking) {
+      return res.status(404).json({ message: 'Booking not found' });
+    }
+
+    res.status(200).json({ message: 'Booking deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Error deleting booking', error: error.message });
+  }
+};

@@ -1,5 +1,6 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
+import nodemailer from 'nodemailer';
 import generateToken from '../utils/generateToken.js';
 
 // @desc    Auth user & get token
@@ -52,6 +53,30 @@ const registerUser = asyncHandler(async (req, res) => {
 
   if (user) {
     generateToken(res, user._id);
+
+       // Send welcome email to the user
+       const transporter = nodemailer.createTransport({
+        service: 'gmail', // Using Gmail, but you can switch to another provider
+        auth: {
+          user: process.env.EMAIL_USER, // Your email account
+          pass: process.env.EMAIL_PASS, // Your email password or app-specific password
+        },
+      });
+
+      const mailOptions = {
+        from: process.env.EMAIL_USER, // Sender's email
+        to: email, // Recipient's email
+        subject: 'Welcome to Our Platform!',
+        text: `Hello ${firstName},\n\nWelcome to our platform! We're excited to have you join us. If you need any help, feel free to contact us.\n\nBest regards,\nYour Company Name`,
+      };
+  
+      transporter.sendMail(mailOptions, (err, info) => {
+        if (err) {
+          console.error('Error sending welcome email:', err);
+          return res.status(500).json({ message: 'Error sending welcome email' });
+        }
+        console.log('Welcome email sent:', info.response);
+      });
 
     res.status(201).json({
       _id: user._id,

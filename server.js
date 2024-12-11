@@ -29,15 +29,15 @@ app.use(cookieParser());
 // CORS middleware
 app.use(
   cors({
-    origin: 'http://localhost:3000', 
-    methods: ['GET', 'POST', 'PUT', 'DELETE'], 
-    credentials: true, 
+    origin: ['http://localhost:3000', 'http://localhost:5173'],  
+    methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    credentials: true,
   })
 );
 
 // Routes
 app.use('/api/users', userRoutes);
-app.use("/api/admin", adminRoutes);
+app.use("/admin", adminRoutes);
 app.use('/api/domestic-cleaning', bookingRoutes); 
 app.use('/api/services', serviceRoutes);
 app.use('/api' , serviceListRoutes);
