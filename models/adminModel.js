@@ -28,22 +28,7 @@ const adminSchema = mongoose.Schema(
       type: String,
       enum: ['superAdmin', 'bookingAdmin', 'userAdmin', 'paymentAdmin'],
       required: true,
-      default: 'userAdmin', // default to a regular admin
-    },
-    permissions: {
-      manageBookings: {
-        type: Boolean,
-        default: false,
-      },
-      manageUsers: {
-        type: Boolean,
-        default: false,
-      },
-      managePayments: {
-        type: Boolean,
-        default: false,
-      },
-      // Additional permissions can be added here
+      default: 'userAdmin', 
     },
   },
   {

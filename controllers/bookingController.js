@@ -5,20 +5,26 @@ import Booking from '../models/bookingModel.js';
 // @route  POST /api/bookings
 // @access Private
 const createBooking = asyncHandler(async (req, res) => {
-  const { service, bookingDate, address, services, totalAmount } = req.body;
+  try {
+    const { service, bookingDate, address, services, totalAmount } = req.body;
 
-  const booking = new Booking({
-    userId: req.user._id, 
-    service,
-    bookingDate,
-    address,
-    services,
-    totalAmount,
-  });
+    const booking = new Booking({
+      userId: req.user._id,
+      service,
+      bookingDate,
+      address,
+      services,
+      totalAmount,
+    });
 
-  const createdBooking = await booking.save();
-  res.status(201).json(createdBooking);
+    const newBooking = await booking.save();
+
+    res.status(201).json({ success: true, message: 'Booking created', booking: newBooking });
+  } catch (err) {
+    res.status(500).json({ success: false, message: 'Error creating booking', error: err.message });
+  }
 });
+
 
 // @desc   Get booking by ID
 // @route  GET /api/bookings/:id
