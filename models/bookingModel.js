@@ -7,21 +7,33 @@ const bookingSchema = mongoose.Schema(
       required: true,
       ref: 'User',
     },
-    bookingDate: {
-      type: Date,
-      required: true,
-    },
-    address: {
+    location: {
       type: String,
       required: true,
     },
     service: {
-      type: String,  
-      required: true, 
-    },
-    totalAmount: {
-      type: Number,
+      type: String,
       required: true,
+      enum: ['domestic', 'events', 'commercial', 'end-of-tenancy'],
+    },
+    duration: {
+      type: Number, 
+      required: true,
+    },
+    pets: {
+      type: String, 
+      required: true,
+      enum: ['yes', 'no'],
+    },
+    bookingDate: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: (value) => {
+          return value >= new Date(); 
+        },
+        message: 'Booking date cannot be in the past',
+      },
     },
   },
   {
@@ -30,5 +42,4 @@ const bookingSchema = mongoose.Schema(
 );
 
 const Booking = mongoose.model('Booking', bookingSchema);
-
 export default Booking;

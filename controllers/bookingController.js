@@ -1,43 +1,52 @@
-import asyncHandler from 'express-async-handler';
 import Booking from '../models/bookingModel.js';
 
-// @desc   Create a new booking
-// @route  POST /api/bookings
-// @access Private
-const createBooking = asyncHandler(async (req, res) => {
+
+const createBooking = async (req, res) => {
+  console.log('Request Body:', req.body);  // Log request body for debugging
+
+  const { location, service, duration, pets, bookingDate } = req.body;
+
+  if (!location || !service || !duration || !pets || !bookingDate) {
+    return res.status(400).json({ message: 'Please provide all required fields' });
+  }
+
+  // Ensure user is authenticated and userId is available in req.user
+  if (!req.user || !req.user._id) {
+    return res.status(401).json({ message: 'User not authenticated' });
+  }
+
+  // Create a new booking using the authenticated user's ID
+  const booking = new Booking({
+    userId: req.user._id,  // Use userId from the authenticated user
+    location,
+    service,
+    duration,
+    pets,
+    bookingDate,
+  });
+
+  // Save the new booking to the database
+  const newBooking = await booking.save();
+  res.status(201).json({ success: true, message: 'Booking created', booking: newBooking });
+};
+
+
+
+
+
+const getBookings = async (req, res) => {
   try {
-    const { service, bookingDate, address, services, totalAmount } = req.body;
+    const bookings = await Booking.find()
+      .populate('service') 
+      .populate('user'); 
 
-    const booking = new Booking({
-      userId: req.user._id,
-      service,
-      bookingDate,
-      address,
-      services,
-      totalAmount,
-    });
-
-    const newBooking = await booking.save();
-
-    res.status(201).json({ success: true, message: 'Booking created', booking: newBooking });
-  } catch (err) {
-    res.status(500).json({ success: false, message: 'Error creating booking', error: err.message });
+    res.status(200).json(bookings);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch bookings.', error });
   }
-});
+};
 
-
-// @desc   Get booking by ID
-// @route  GET /api/bookings/:id
-// @access Private
-const getBookingById = asyncHandler(async (req, res) => {
-  const booking = await Booking.findById(req.params.id);
-
-  if (booking) {
-    res.json(booking);
-  } else {
-    res.status(404);
-    throw new Error('Booking not found');
-  }
-});
-
-export { createBooking, getBookingById };
+export   {
+  createBooking,
+  getBookings,
+};

@@ -1,13 +1,13 @@
 import express from 'express';
-import { 
-  getCheckoutSession 
-} from '../controllers/paymentController.js';
-import { protect } from '../middleware/authMiddleware.js';
+import { createCheckoutSession } from '../controllers/paymentController.js';
+import { createPaymentIntent }  from '../controllers/paymentController.js';
 
 const router = express.Router();
 
-// Secure routes with 'protect'
-router.post('/checkout-session/:bookingId', protect, getCheckoutSession);
+// Route to create a Stripe checkout session
+router.post('/create-checkout-session', createCheckoutSession);
 
+// Route to create payment intent
+router.post('/create-payment-intent', createPaymentIntent);
 
 export default router;

@@ -8,11 +8,11 @@ import cookieParser from 'cookie-parser';
 import userRoutes from './routes/userRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
-import serviceListRoutes from './routes/serviceListRoutes.js'
 import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import adminBookingRoutes from './routes/adminBookingRoutes.js'
 import adminUserRoutes from './routes/adminUserRoutes.js'
 import paymentRoutes from './routes/paymentRoutes.js'
+import completeRoutes from './routes/completeRoutes.js';
 
 
 
@@ -26,9 +26,9 @@ const app = express();
 
 // Middlewares
 app.use(express.json());
+app.use(cookieParser());
 app.use(morgan('combined'));
 app.use(express.urlencoded({ extended: true }));
-app.use(cookieParser());
 app.use(
   helmet.contentSecurityPolicy({
     directives: {
@@ -45,15 +45,15 @@ app.use(
 );
 
 
-// CORS middleware
 app.use(
   cors({
-    origin: ['http://localhost:3000', 'http://localhost:5173'],  
+    origin: [process.env.CLIENT_URL, 'http://localhost:5173'],  
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
     credentials: true,
   })
-  
 );
+
 
 app.get('/api/config', (req, res) => {
   res.json({
@@ -68,12 +68,13 @@ app.get('/api/config', (req, res) => {
 // Routes
 app.use('/api/users', userRoutes);
 app.use("/api/admin/auth", adminAuthRoutes);
+app.use("/api", bookingRoutes);
 app.use("/api/admin/bookings", adminBookingRoutes);
 app.use("/api/admin/users", adminUserRoutes);
 app.use('/api/domestic-cleaning', bookingRoutes); 
 app.use('/api/services', serviceRoutes);
-app.use('/api' , serviceListRoutes);
-app.use('/api', paymentRoutes);
+app.use('/api/payment', paymentRoutes);
+app.use('/api', completeRoutes);
 
 
 // Start server

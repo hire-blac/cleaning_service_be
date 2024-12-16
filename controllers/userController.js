@@ -1,31 +1,42 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import nodemailer from 'nodemailer';
-import generateToken from '../utils/generateToken.js';
+import jwt from 'jsonwebtoken';
 
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
 // @access  Public
 const authUser = asyncHandler(async (req, res) => {
- 
-  const {  email, password } = req.body;
- 
-  const user = await User.findOne({ email });
+  const { email, password } = req.body;
 
-  if (user && (await user.matchPassword(password))) {
-    generateToken(res, user._id);
+  try {
+    // Find user by email
+    const user = await User.findOne({ email });
 
-    res.status(200).json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      homeAddress: user.homeAddress,
-    });
-  } else {
-    res.status(401);
-    throw new Error('Invalid email or password');
+    if (user && (await user.matchPassword(password))) {
+      // Generate JWT
+      const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+        expiresIn: '1d',
+      });
+
+      // Respond with token and user details
+      return res.status(200).json({
+        token, // Send token in response
+        user: {
+          _id: user._id,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          email: user.email,
+          phoneNumber: user.phoneNumber,
+          homeAddress: user.homeAddress,
+        },
+      });
+    }
+    // If authentication fails
+    res.status(401).json({ message: 'Invalid email or password' });
+  } catch (error) {
+    // Handle server errors
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -35,71 +46,117 @@ const authUser = asyncHandler(async (req, res) => {
 const registerUser = asyncHandler(async (req, res) => {
   const { firstName, lastName, phoneNumber, email, password, homeAddress } = req.body;
 
-  const userExists = await User.findOne({ email });
+  try {
+    // Check if the user already exists
+    const userExists = await User.findOne({ email });
 
-  if (userExists) {
-    res.status(400);
-    throw new Error('User already exists');
-  }
+    if (userExists) {
+      return res.status(400).json({ message: 'User already exists' });
+    }
 
-  const user = await User.create({
-    firstName,
-    lastName,
-    phoneNumber,
-    email,
-    password,
-    homeAddress,
-  });
-
-  if (user) {
-    generateToken(res, user._id);
-
-       // Send welcome email to the user
-       const transporter = nodemailer.createTransport({
-        service: 'gmail', // Using Gmail, but you can switch to another provider
-        auth: {
-          user: process.env.EMAIL_USER, // Your email account
-          pass: process.env.EMAIL_PASS, // Your email password or app-specific password
-        },
-      });
-
-      const mailOptions = {
-        from: process.env.EMAIL_USER, // Sender's email
-        to: email, // Recipient's email
-        subject: 'Welcome to Our Platform!',
-        text: `Hello ${firstName},\n\nWelcome to our platform! We're excited to have you join us. If you need any help, feel free to contact us.\n\nBest regards,\nYour Company Name`,
-      };
-  
-      transporter.sendMail(mailOptions, (err, info) => {
-        if (err) {
-          console.error('Error sending welcome email:', err);
-          return res.status(500).json({ message: 'Error sending welcome email' });
-        }
-        console.log('Welcome email sent:', info.response);
-      });
-
-    res.status(201).json({
-      _id: user._id,
-      firstName: user.firstName,
-      lastName: user.lastName,
-      email: user.email,
-      phoneNumber: user.phoneNumber,
-      homeAddress: user.homeAddress,
+    // Create a new user
+    const user = await User.create({
+      firstName,
+      lastName,
+      phoneNumber,
+      email,
+      password,
+      homeAddress,
     });
-  } else {
-    res.status(400);
-    throw new Error('Invalid user data');
+
+    if (!user) {
+      return res.status(500).json({ message: 'Failed to register user' });
+    }
+
+    // Generate JWT token
+    const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
+      expiresIn: '1d',
+    });
+
+    // Send welcome email
+    const transporter = nodemailer.createTransport({
+      service: 'gmail', // Using Gmail, but this can be configured
+      auth: {
+        user: process.env.EMAIL_USER, // Email account
+        pass: process.env.EMAIL_PASS, // Email password or app password
+      },
+    });
+
+    const mailOptions = {
+      from: process.env.EMAIL_USER, // Sender's email
+      to: email, // Recipient's email
+      subject: 'Welcome to Our Platform!',
+      text: `Hello ${firstName},\n\nWelcome to our platform! We're excited to have you join us. If you need any help, feel free to contact us.\n\nBest regards,\nYour Company Name`,
+    };
+
+    transporter.sendMail(mailOptions, (err, info) => {
+      if (err) {
+        console.error('Error sending welcome email:', err);
+        return res.status(500).json({ message: 'User registered, but email failed to send' });
+      } else {
+        console.log('Welcome email sent:', info.response);
+      }
+    });
+    
+    return res.status(200).json({
+      token, // Send token in response
+      user: {
+        _id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        homeAddress: user.homeAddress,
+      },
+    });
+  } catch (error) {
+    console.error('Error registering user:', error);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
-// @desc    Logout user / clear cookie
+
+const getUserById = async (req, res) => {
+  try {
+    // Get the token from the Authorization header
+    const token = req.headers.authorization && req.headers.authorization.split(' ')[1]; // "Bearer <token>"
+    
+    if (!token) {
+      return res.status(403).json({ message: 'Authorization token required' });
+    }
+
+    // Decode and verify the token
+    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+
+    // Check if the decoded userId matches the one in the request parameters
+    const userId = req.params.id;
+    if (decoded.userId !== userId) {
+      return res.status(403).json({ message: 'Unauthorized access to user data' });
+    }
+
+    // Query the database for the user
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ message: 'User not found' });
+    }
+
+    // Return user details (excluding sensitive information like password)
+    const { firstName, lastName, email, phoneNumber, homeAddress } = user;
+    return res.status(200).json({ firstName, lastName, email, phoneNumber, homeAddress });
+    
+  } catch (error) {
+    console.error('Error fetching user details:', error);
+    return res.status(500).json({ message: 'Server error' });
+  }
+};
+
+
+// @desc    Logout user
 // @route   POST /api/users/logout
 // @access  Public
 const logoutUser = (req, res) => {
-  res.cookie('jwt', '', {
-    httpOnly: true,
-    expires: new Date(0),
-  });
+  // No cookies to clear anymore, just send a message
   res.status(200).json({ message: 'Logged out successfully' });
 };
 
@@ -130,19 +187,15 @@ const getUserProfile = asyncHandler(async (req, res) => {
 const updateUserProfile = asyncHandler(async (req, res) => {
   const user = await User.findById(req.user._id);
 
-
-
   if (user) {
-  
-      // Check if the email is being updated and validate uniqueness
-      if (req.body.email && req.body.email !== user.email) {
-        const emailExists = await User.findOne({ email: req.body.email });
-        if (emailExists) {
-          res.status(400).json({ message: 'Email is already taken' });
-          return; // Exit early if email already exists
-        }
+    // Check if the email is being updated and validate uniqueness
+    if (req.body.email && req.body.email !== user.email) {
+      const emailExists = await User.findOne({ email: req.body.email });
+      if (emailExists) {
+        res.status(400).json({ message: 'Email is already taken' });
+        return; // Exit early if email already exists
       }
-
+    }
 
     user.firstName = req.body.firstName || user.firstName;
     user.lastName = req.body.lastName || user.lastName;
@@ -173,6 +226,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 export {
   authUser,
   registerUser,
+  getUserById,
   logoutUser,
   getUserProfile,
   updateUserProfile,
