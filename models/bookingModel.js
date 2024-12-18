@@ -14,10 +14,9 @@ const bookingSchema = mongoose.Schema(
     service: {
       type: String,
       required: true,
-      enum: ['domestic', 'events', 'commercial', 'end-of-tenancy'],
     },
     duration: {
-      type: Number, 
+      type: String, 
       required: true,
     },
     pets: {

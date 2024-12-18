@@ -20,7 +20,11 @@ const protect = asyncHandler(async (req, res, next) => {
       next(); // Call next middleware/route handler
     } catch (error) {
       console.error('Token verification failed:', error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      if (error.name === 'TokenExpiredError') {
+        res.status(401).json({ message: 'Token has expired. Please log in again.' });
+      } else {
+        res.status(401).json({ message: 'Not authorized, token failed' });
+      }
     }
   }
 
@@ -29,5 +33,6 @@ const protect = asyncHandler(async (req, res, next) => {
     res.status(401).json({ message: 'Not authorized, no token' });
   }
 });
+
 
 export {protect};

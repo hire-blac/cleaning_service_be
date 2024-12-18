@@ -3,13 +3,13 @@ import {
   createBooking,
   getBookings,
 } from '../controllers/bookingController.js';
-// import { protect } from '../middleware/authMiddleware.js';
+import { protect } from '../middleware/authMiddleware.js';
 
 
 
 const router = express.Router();
 
-router.post('/bookings',  createBooking);
+router.post('/bookings', protect, createBooking);
 router.get('/bookings', getBookings); 
 
 

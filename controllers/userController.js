@@ -16,7 +16,7 @@ const authUser = asyncHandler(async (req, res) => {
     if (user && (await user.matchPassword(password))) {
       // Generate JWT
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: '1d',
+        expiresIn: '7d',
       });
 
       // Respond with token and user details
@@ -70,7 +70,7 @@ const registerUser = asyncHandler(async (req, res) => {
 
     // Generate JWT token
     const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-      expiresIn: '1d',
+      expiresIn: '7d',
     });
 
     // Send welcome email
