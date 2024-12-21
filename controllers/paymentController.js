@@ -33,7 +33,7 @@ const createCheckoutSession = asyncHandler(async (req, res) => {
       customer_email: email, // 
     });
 
-    res.status(200).json({ id: session.id }); // Send the session ID to the frontend
+    res.status(200).json({ id: session.id }); 
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

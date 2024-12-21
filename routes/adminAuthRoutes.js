@@ -1,10 +1,9 @@
-import express from "express";
-import { loginAdmin, getAdminProfile } from "../controllers/adminAuthController.js";
-import { protectAdmin } from "../middleware/adminMiddleware.js";
+import express from 'express';
+import { registerAdmin, loginAdmin } from '../controllers/adminAuthController.js';
 
 const router = express.Router();
 
-router.post("/login", loginAdmin);
-router.get("/dashboard", protectAdmin, getAdminProfile);
+router.post('/register', registerAdmin);
+router.post('/login', loginAdmin);
 
 export default router;

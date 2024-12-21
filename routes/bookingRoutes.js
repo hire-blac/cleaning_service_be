@@ -1,16 +1,11 @@
-import express from 'express';
-import {
-  createBooking,
-  getBookings,
-} from '../controllers/bookingController.js';
-import { protect } from '../middleware/authMiddleware.js';
-
-
-
+import express from "express";
+import { createBooking, getUserBookings } from "../controllers/bookingController.js";
 const router = express.Router();
 
-router.post('/bookings', protect, createBooking);
-router.get('/bookings', getBookings); 
+// Create a Booking
+router.post("/bookings", createBooking);
 
+// Get User-Specific Bookings
+router.get("/bookings/user/:userId", getUserBookings);
 
-export default  router;
+export default router;

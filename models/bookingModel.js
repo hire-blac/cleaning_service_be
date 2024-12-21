@@ -1,44 +1,35 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-const bookingSchema = mongoose.Schema(
+const bookingSchema = new mongoose.Schema(
   {
     userId: {
-      type: mongoose.Schema.Types.ObjectId,
-      required: true,
-      ref: 'User',
-    },
-    location: {
       type: String,
       required: true,
     },
-    service: {
+    address: {
       type: String,
+      required: true,
+    },
+    serviceType: {
+      type: String,
+      enum: ["domestic cleaning", "commercial cleaning", "end of tenancy cleaning", "events and festivals"],
       required: true,
     },
     duration: {
-      type: String, 
+      type: Number, 
       required: true,
     },
-    pets: {
+    petsOption: {
+      type: String,
+      enum: ["yes", "no"],
+      required: true,
+    },
+    dateOfAppointment: {
       type: String, 
       required: true,
-      enum: ['yes', 'no'],
-    },
-    bookingDate: {
-      type: Date,
-      required: true,
-      validate: {
-        validator: (value) => {
-          return value >= new Date(); 
-        },
-        message: 'Booking date cannot be in the past',
-      },
     },
   },
-  {
-    timestamps: true,
-  }
+  { timestamps: true }
 );
 
-const Booking = mongoose.model('Booking', bookingSchema);
-export default Booking;
+export default mongoose.model("Booking", bookingSchema);

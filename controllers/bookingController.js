@@ -1,52 +1,61 @@
-import Booking from '../models/bookingModel.js';
-
-
-const createBooking = async (req, res) => {
-  console.log('Request Body:', req.body);  // Log request body for debugging
-
-  const { location, service, duration, pets, bookingDate } = req.body;
-
-  if (!location || !service || !duration || !pets || !bookingDate) {
-    return res.status(400).json({ message: 'Please provide all required fields' });
-  }
-
-  // Ensure user is authenticated and userId is available in req.user
-  if (!req.user || !req.user._id) {
-    return res.status(401).json({ message: 'User not authenticated' });
-  }
-
-  // Create a new booking using the authenticated user's ID
-  const booking = new Booking({
-    userId: req.user._id,  // Use userId from the authenticated user
-    location,
-    service,
-    duration,
-    pets,
-    bookingDate,
-  });
-
-  // Save the new booking to the database
-  const newBooking = await booking.save();
-  res.status(201).json({ success: true, message: 'Booking created', booking: newBooking });
-};
+import Booking from "../models/bookingModel.js";
 
 
 
+// Create a Booking
+  const createBooking = async (req, res) => {
+  const { userId, address, serviceType, duration, petsOption, dateOfAppointment } = req.body;
 
-
-const getBookings = async (req, res) => {
   try {
-    const bookings = await Booking.find()
-      .populate('service') 
-      .populate('user'); 
+    // Validate request data
+    if (!userId || !address || !serviceType || !duration || !petsOption || !dateOfAppointment) {
+      return res.status(400).json({ message: "All fields are required" });
+    }
 
-    res.status(200).json(bookings);
-  } catch (error) {
-    res.status(500).json({ message: 'Failed to fetch bookings.', error });
+    // Validate serviceType
+    const validServiceTypes = ["domestic cleaning", "commercial cleaning", "end of tenancy cleaning", "events and festivals"];
+    if (!validServiceTypes.includes(serviceType)) {
+      return res.status(400).json({ message: "Invalid service type" });
+    }
+
+    // Validate petsOption
+    if (!["yes", "no"].includes(petsOption)) {
+      return res.status(400).json({ message: "Pets option must be 'yes' or 'no'" });
+    }
+
+    // Create new booking
+    const booking = await Booking.create({
+      userId,
+      address,
+      serviceType,
+      duration,
+      petsOption,
+      dateOfAppointment,
+    });
+
+    return res.status(201).json({ booking });
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to create booking" });
   }
 };
 
-export   {
+
+// Get User-Specific Bookings
+const getUserBookings = async (req, res) => {
+  const { userId } = req.params;
+
+  try {
+    // Fetch bookings for the specified user
+    const bookings = await Booking.find({ userId });
+    return res.status(200).json(bookings);
+  } catch (err) {
+    console.error(err);
+    return res.status(500).json({ message: "Failed to fetch bookings" });
+  }
+};
+
+export {
   createBooking,
-  getBookings,
+  getUserBookings,
 };

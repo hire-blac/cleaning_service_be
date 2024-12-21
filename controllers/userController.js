@@ -21,7 +21,7 @@ const authUser = asyncHandler(async (req, res) => {
 
       // Respond with token and user details
       return res.status(200).json({
-        token, // Send token in response
+        token, 
         user: {
           _id: user._id,
           firstName: user.firstName,
@@ -73,45 +73,37 @@ const registerUser = asyncHandler(async (req, res) => {
       expiresIn: '7d',
     });
 
-    // Send welcome email
+    // Create a transporter to send the welcome email
     const transporter = nodemailer.createTransport({
-      service: 'gmail', // Using Gmail, but this can be configured
+      service: 'gmail',
       auth: {
-        user: process.env.EMAIL_USER, // Email account
-        pass: process.env.EMAIL_PASS, // Email password or app password
+        user: process.env.EMAIL_USER, 
+        pass: process.env.EMAIL_PASS, 
       },
     });
 
+    // Set up mail options
     const mailOptions = {
-      from: process.env.EMAIL_USER, // Sender's email
-      to: email, // Recipient's email
+      from: process.env.EMAIL_USER,
+      to: email,
       subject: 'Welcome to Our Platform!',
       text: `Hello ${firstName},\n\nWelcome to our platform! We're excited to have you join us. If you need any help, feel free to contact us.\n\nBest regards,\nYour Company Name`,
     };
 
-    transporter.sendMail(mailOptions, (err, info) => {
-      if (err) {
-        console.error('Error sending welcome email:', err);
-        return res.status(500).json({ message: 'User registered, but email failed to send' });
-      } else {
-        console.log('Welcome email sent:', info.response);
-      }
+    // Send email asynchronously
+    await transporter.sendMail(mailOptions);
+    console.log('Welcome email sent to:', email);
+
+    // Send successful response
+    res.status(201).json({
+      message: 'User registered successfully and welcome email sent.',
+      token,
+      userId: user._id,
     });
-    
-    return res.status(200).json({
-      token, // Send token in response
-      user: {
-        _id: user._id,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        email: user.email,
-        phoneNumber: user.phoneNumber,
-        homeAddress: user.homeAddress,
-      },
-    });
-  } catch (error) {
-    console.error('Error registering user:', error);
-    res.status(500).json({ message: 'Internal server error' });
+
+  } catch (err) {
+    console.error('Error registering user or sending email:', err);
+    res.status(500).json({ message: 'User registration failed or email sending failed.' });
   }
 });
 
@@ -185,6 +177,8 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @route   PUT /api/users/profile
 // @access  Private
 const updateUserProfile = asyncHandler(async (req, res) => {
+  console.log("Request Body:", req.body); // 
+
   const user = await User.findById(req.user._id);
 
   if (user) {
@@ -195,6 +189,11 @@ const updateUserProfile = asyncHandler(async (req, res) => {
         res.status(400).json({ message: 'Email is already taken' });
         return; // Exit early if email already exists
       }
+    }
+
+    // Ensure firstName is a string
+    if (typeof req.body.firstName !== 'string') {
+      return res.status(400).json({ message: 'First name must be a string' });
     }
 
     user.firstName = req.body.firstName || user.firstName;
@@ -222,6 +221,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     throw new Error('User not found');
   }
 });
+
 
 export {
   authUser,
