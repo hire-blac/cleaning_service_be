@@ -27,17 +27,16 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(morgan('combined'));
 app.use(express.urlencoded({ extended: true }));
-app.use(
-  cors({
-    origin: [ 
-      'https://www.lomacom.co.uk' ,"http://localhost:3000",
-    ],
-    methods: ['GET', 'POST', 'PUT', 'DELETE'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-    credentials: true, 
-  })
-);
-app.use(cors(corsOptions));
+app.use(cors({
+  origin: [
+      'https://www.lomacom.co.uk', 
+      'http://localhost:3000'
+  ],
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+  allowedHeaders: ['Content-Type', 'Authorization'],
+  credentials: true, 
+}));
+
 
 app.use(
   helmet.contentSecurityPolicy({
