@@ -37,8 +37,7 @@ app.use(
     credentials: true, 
   })
 );
-
-app.options('*', cors());
+app.use(cors(corsOptions));
 
 app.use(
   helmet.contentSecurityPolicy({

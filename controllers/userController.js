@@ -1,6 +1,5 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
-import nodemailer from 'nodemailer';
 import jwt from 'jsonwebtoken';
 
 // @desc    Auth user & get token
