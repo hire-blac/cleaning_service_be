@@ -7,10 +7,11 @@ dotenv.config();
 
 const generateToken = (id) => {
   return jwt.sign({ id }, process.env.JWT_SECRET, {
-    expiresIn: '1d',
+    expiresIn: '7d',
   });
 };
 
+// Register Admin
 const registerAdmin = async (req, res) => {
   const { name, email, password } = req.body;
 
@@ -42,6 +43,7 @@ const registerAdmin = async (req, res) => {
   }
 };
 
+// Login Admin
 const loginAdmin = async (req, res) => {
   const { email, password } = req.body;
 
@@ -73,4 +75,26 @@ const loginAdmin = async (req, res) => {
   }
 };
 
-export { registerAdmin, loginAdmin };
+// Fetch Admin Profile
+// Fetch Admin Profile
+const getAdminProfile = async (req, res) => {
+  try {
+    // Extract admin ID from the middleware-attached `req.admin`
+    const admin = await Admin.findById(req.admin.id).select('-password'); // Exclude the password
+
+    if (!admin) {
+      return res.status(404).json({ message: 'Admin not found' });
+    }
+
+    res.json({
+      id: admin._id,
+      name: admin.name,
+      email: admin.email,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Server error' });
+  }
+};
+
+export { registerAdmin, loginAdmin, getAdminProfile };

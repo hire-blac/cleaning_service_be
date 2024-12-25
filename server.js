@@ -8,7 +8,6 @@ import cookieParser from 'cookie-parser';
 import userRoutes from './routes/userRoutes.js';
 import bookingRoutes from './routes/bookingRoutes.js';
 import serviceRoutes from './routes/serviceRoutes.js';
-import adminRoutes from './routes/adminRoutes.js'
 import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js'
 import completeRoutes from './routes/completeRoutes.js';
@@ -44,7 +43,7 @@ app.use(
       defaultSrc: ["'self'"],
       scriptSrc: [
         "'self'",
-        "'nonce-random-generated-nonce'" // Accept only this nonce
+        "'nonce-random-generated-nonce'" 
       ],
       styleSrc: ["'self'"],
       objectSrc: ["'none'"],
@@ -69,7 +68,7 @@ app.get('/api/config', (req, res) => {
 // Routes
 app.use('/api/users', userRoutes);
 app.use("/api", bookingRoutes);
-app.use('/api/admin', adminRoutes);
+app.use('/api/admin', adminAuthRoutes);
 app.use('/api/admin', adminAuthRoutes);
 app.use('/api/domestic-cleaning', bookingRoutes); 
 app.use('/api/services', serviceRoutes);
