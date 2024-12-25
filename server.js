@@ -30,7 +30,7 @@ app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
     origin: [ 
-      'https://www.lomacom.co.uk' 
+      'https://www.lomacom.co.uk' ,"http://localhost:3000",
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
     allowedHeaders: ['Content-Type', 'Authorization'],

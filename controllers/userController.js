@@ -39,7 +39,6 @@ const authUser = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
-
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
@@ -73,37 +72,23 @@ const registerUser = asyncHandler(async (req, res) => {
       expiresIn: '7d',
     });
 
-    // Create a transporter to send the welcome email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER, 
-        pass: process.env.EMAIL_PASS, 
-      },
-    });
-
-    // Set up mail options
-    const mailOptions = {
-      from: process.env.EMAIL_USER,
-      to: email,
-      subject: 'Welcome to Our Platform!',
-      text: `Hello ${firstName},\n\nWelcome to our platform! We're excited to have you join us. If you need any help, feel free to contact us.\n\nBest regards,\nYour Company Name`,
-    };
-
-    // Send email asynchronously
-    await transporter.sendMail(mailOptions);
-    console.log('Welcome email sent to:', email);
-
-    // Send successful response
+    // Send successful response with user details and token
     res.status(201).json({
-      message: 'User registered successfully and welcome email sent.',
+      message: 'User registered successfully.',
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        phoneNumber: user.phoneNumber,
+        email: user.email,
+        homeAddress: user.homeAddress,
+      },
       token,
-      userId: user._id,
     });
 
   } catch (err) {
-    console.error('Error registering user or sending email:', err);
-    res.status(500).json({ message: 'User registration failed or email sending failed.' });
+    console.error('Error registering user:', err);
+    res.status(500).json({ message: 'User registration failed.' });
   }
 });
 
