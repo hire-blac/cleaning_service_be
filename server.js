@@ -29,8 +29,7 @@ app.use(morgan('combined'));
 app.use(express.urlencoded({ extended: true }));
 app.use(
   cors({
-    origin: [
-      'http://localhost:3000',   
+    origin: [ 
       'https://www.lomacom.co.uk' 
     ],
     methods: ['GET', 'POST', 'PUT', 'DELETE'],
