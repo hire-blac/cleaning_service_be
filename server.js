@@ -23,8 +23,9 @@ const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 if (!serviceAccountPath) {
   throw new Error("FIREBASE_SERVICE_ACCOUNT_PATH is not set in environment variables.");
 }
+const resolvedPath = path.resolve(serviceAccountPath);
 
-const serviceAccount = JSON.parse(fs.readFileSync(path.resolve(serviceAccountPath), 'utf8'));
+const serviceAccount = JSON.parse(fs.readFileSync(resolvedPath, 'utf8'));
 
 
 admin.initializeApp({
