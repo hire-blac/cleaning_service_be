@@ -15,14 +15,18 @@ import admin from 'firebase-admin';
 import { readFileSync } from "fs";
 import User from './models/userModel.js'; 
 
-
+dotenv.config();
 
 const serviceAccount = JSON.parse(
   readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH, "utf8")
 );
 
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
+});
 
-dotenv.config();
+
 
 const port = process.env.PORT || 8082;
 
@@ -72,10 +76,7 @@ app.get('/api/config', (req, res) => {
 });
 
 
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
-});
+
 
 
 // Example route for Google login
