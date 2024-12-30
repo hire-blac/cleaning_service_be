@@ -12,17 +12,21 @@ import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js'
 import completeRoutes from './routes/completeRoutes.js';
 import admin from 'firebase-admin';
-// import { readFileSync } from "fs";
-import path from 'path';
+import { readFileSync } from "fs";
 import User from './models/userModel.js'; 
 
 dotenv.config();
 
-const serviceAccountPath = path.resolve('config/lomacom-cleaning-services-firebase-adminsdk-wnyqu-1a4d128fb3.json');
+if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
+  console.error('FIREBASE_SERVICE_ACCOUNT environment variable not set');
+  process.exit(1);
+}
 
+// Parse the service account JSON from the environment variable
+const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
 
 admin.initializeApp({
-  credential: admin.credential.cert(serviceAccountPath),
+  credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
 });
 
