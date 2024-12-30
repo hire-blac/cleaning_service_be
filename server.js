@@ -11,7 +11,15 @@ import serviceRoutes from './routes/serviceRoutes.js';
 import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js'
 import completeRoutes from './routes/completeRoutes.js';
+import admin from 'firebase-admin';
+import { readFileSync } from "fs";
+import User from './models/userModel.js'; 
 
+
+
+const serviceAccount = JSON.parse(
+  readFileSync(process.env.FIREBASE_SERVICE_ACCOUNT_PATH, "utf8")
+);
 
 
 dotenv.config();
@@ -63,6 +71,40 @@ app.get('/api/config', (req, res) => {
   });
 });
 
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
+});
+
+
+// Example route for Google login
+app.post('/api/users/google-login', async (req, res) => {
+  const { tokenId } = req.body;
+
+  if (!tokenId) {
+      return res.status(400).json({ message: 'Token ID is required' });
+  }
+
+  try {
+      // Verify the ID token using Firebase Admin SDK
+      const decodedToken = await admin.auth().verifyIdToken(tokenId);
+      const { email, uid } = decodedToken;
+
+      // Implement user creation or retrieval logic here
+      let user = await User.findOne({ email });
+      if (!user) {
+          user = new User({ email, uid }); // Create new user if not found
+          await user.save();
+      }
+
+      // Respond with success message and user data
+      res.status(200).json({ message: 'Login successful', user });
+  } catch (error) {
+      console.error("Error verifying Google token:", error);
+      res.status(500).json({ message: 'Error verifying Google token', error: error.message });
+  }
+});
 
 
 

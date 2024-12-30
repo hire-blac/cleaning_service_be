@@ -1,6 +1,10 @@
 import asyncHandler from 'express-async-handler';
 import User from '../models/userModel.js';
 import jwt from 'jsonwebtoken';
+import { OAuth2Client } from 'google-auth-library';
+
+
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
 // @desc    Auth user & get token
 // @route   POST /api/users/auth
@@ -38,6 +42,9 @@ const authUser = asyncHandler(async (req, res) => {
     res.status(500).json({ message: 'Internal server error' });
   }
 });
+
+
+
 // @desc    Register a new user
 // @route   POST /api/users
 // @access  Public
@@ -207,6 +214,67 @@ const updateUserProfile = asyncHandler(async (req, res) => {
 });
 
 
+
+// @desc    Google Login
+// @route   POST /api/users/google-login
+// @access  Public
+const googleLogin = asyncHandler(async (req, res) => {
+  const { tokenId } = req.body;  
+
+  if (!tokenId) {
+    return res.status(400).json({ message: 'Token ID is required' });
+  }
+
+  try {
+    const ticket = await client.verifyIdToken({
+      idToken: tokenId,
+      audience: process.env.GOOGLE_CLIENT_ID,  
+    });
+
+    const payload = ticket.getPayload();  
+    const { email, given_name, family_name } = payload;
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      user = new User({
+        firstName: given_name,
+        lastName: family_name,
+        email,
+        password: 'google-auth', 
+        phoneNumber: '',  
+        homeAddress: '',  
+      });
+
+      
+      await user.save();
+    }
+
+    const token = jwt.sign(
+      { userId: user._id },  
+      process.env.JWT_SECRET,  
+      { expiresIn: '7d' }  
+    );
+
+    res.status(200).json({
+      message: 'Login successful',
+      user: {
+        id: user._id,
+        firstName: user.firstName,
+        lastName: user.lastName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        homeAddress: user.homeAddress,
+      },
+      token,  
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: 'Error verifying Google token', error: error.message });
+  }
+});
+
+
 export {
   authUser,
   registerUser,
@@ -214,4 +282,5 @@ export {
   logoutUser,
   getUserProfile,
   updateUserProfile,
+  googleLogin
 };
