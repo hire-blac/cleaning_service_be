@@ -24,9 +24,10 @@ if (!serviceAccountPath || !fs.existsSync(serviceAccountPath)) {
   throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable not set or file not found");
 }
 
+const absolutePath = path.resolve(serviceAccountPath);
 
-// Resolve the file path and read the content
-const serviceAccount = JSON.parse(fs.readFileSync(path.resolve(serviceAccountPath), 'utf8'));
+const serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
