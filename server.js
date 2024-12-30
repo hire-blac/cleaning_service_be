@@ -20,19 +20,24 @@ dotenv.config();
 
 const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT;
 
-if (!serviceAccountPath || !fs.existsSync(serviceAccountPath)) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable not set or file not found");
+
+if (!serviceAccountPath) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
 }
 
 const absolutePath = path.resolve(serviceAccountPath);
 
 const serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
 
+if (!fs.existsSync(absolutePath)) {
+  throw new Error("Firebase service account file not found at the specified path: " + absolutePath);
+}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
   databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
 });
+
 
 
 
