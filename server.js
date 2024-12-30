@@ -18,20 +18,14 @@ import User from './models/userModel.js';
 
 dotenv.config();
 
-const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT;
-
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT_PATH;
 
 if (!serviceAccountPath) {
-  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable is not set.");
+  throw new Error("FIREBASE_SERVICE_ACCOUNT_PATH is not set in environment variables.");
 }
 
-const absolutePath = path.resolve(serviceAccountPath);
+const serviceAccount = JSON.parse(fs.readFileSync(path.resolve(serviceAccountPath), 'utf8'));
 
-const serviceAccount = JSON.parse(fs.readFileSync(absolutePath, 'utf8'));
-
-if (!fs.existsSync(absolutePath)) {
-  throw new Error("Firebase service account file not found at the specified path: " + absolutePath);
-}
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
