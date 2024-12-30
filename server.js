@@ -120,7 +120,6 @@ app.post('/api/users/google-login', async (req, res) => {
 app.use('/api/users', userRoutes);
 app.use("/api", bookingRoutes);
 app.use('/api/admin', adminAuthRoutes);
-app.use('/api/admin', adminAuthRoutes);
 app.use('/api/domestic-cleaning', bookingRoutes); 
 app.use('/api/services', serviceRoutes);
 app.use('/api/payment', paymentRoutes);
