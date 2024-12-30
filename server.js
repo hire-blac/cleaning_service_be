@@ -1,4 +1,6 @@
 import express from 'express';
+import fs from 'fs';
+import path from 'path';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import morgan from 'morgan';
@@ -12,18 +14,19 @@ import adminAuthRoutes from './routes/adminAuthRoutes.js';
 import paymentRoutes from './routes/paymentRoutes.js'
 import completeRoutes from './routes/completeRoutes.js';
 import admin from 'firebase-admin';
-import { readFileSync } from "fs";
 import User from './models/userModel.js'; 
 
 dotenv.config();
 
-if (!process.env.FIREBASE_SERVICE_ACCOUNT) {
-  console.error('FIREBASE_SERVICE_ACCOUNT environment variable not set');
-  process.exit(1);
+const serviceAccountPath = process.env.FIREBASE_SERVICE_ACCOUNT;
+
+if (!serviceAccountPath) {
+  throw new Error("FIREBASE_SERVICE_ACCOUNT environment variable not set");
 }
 
-// Parse the service account JSON from the environment variable
-const serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT);
+// Resolve the file path and read the content
+const serviceAccount = JSON.parse(fs.readFileSync(path.resolve(serviceAccountPath), 'utf8'));
+
 
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
