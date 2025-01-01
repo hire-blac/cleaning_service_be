@@ -35,7 +35,8 @@ try {
   
   admin.initializeApp({
     credential: admin.credential.cert(serviceAccount),
-    databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
+    databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com",
+    projectId: serviceAccount.project_id 
   });
 
 } catch (error) {
