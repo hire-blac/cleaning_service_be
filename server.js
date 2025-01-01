@@ -18,19 +18,29 @@ import User from './models/userModel.js';
 
 dotenv.config();
 
-const serviceAccountPath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT);
 
-if (!fs.existsSync(serviceAccountPath)) {
-  throw new Error("Firebase service account file not found.");
+try {
+  const serviceAccountPath = path.resolve(process.env.FIREBASE_SERVICE_ACCOUNT);
+  
+  // Check if the service account file exists
+  if (!fs.existsSync(serviceAccountPath)) {
+    throw new Error("Firebase service account file not found.");
+  }
+
+  console.log('Service Account:', serviceAccountPath);
+
+  
+  const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
+
+  
+  admin.initializeApp({
+    credential: admin.credential.cert(serviceAccount),
+    databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
+  });
+
+} catch (error) {
+  console.error('Error initializing Firebase:', error);
 }
-
-const serviceAccount = JSON.parse(fs.readFileSync(serviceAccountPath, 'utf8'));
-admin.initializeApp({
-  credential: admin.credential.cert(serviceAccount),
-  databaseURL: "https://lomacom-cleaning-services-default-rtdb.firebaseio.com"
-});
-
-
 
 
 const port = process.env.PORT || 8082;

@@ -11,10 +11,16 @@ const bookingSchema = new mongoose.Schema(
       required: true,
     },
     serviceType: {
-      type: String,
-      enum: ["domestic cleaning", "commercial cleaning", "end of tenancy cleaning", "events and festivals"],
-      required: true,
-    },
+      type: {
+        type: String,
+        enum: ["domestic cleaning", "commercial cleaning", "end of tenancy cleaning", "events and festivals"],
+        required: true,
+      },
+      fee: {
+        type: Number,
+        required: true,
+      }
+      },
     duration: {
       type: Number, 
       required: true,
